@@ -102,8 +102,14 @@ button{font-family:'Mali';cursor:pointer}
 .pin-dot{width:14px;height:14px;border-radius:50%;background:var(--line);transition:background .15s}
 .pin-dot.filled{background:var(--orange)}
 .key{background:var(--paper);border:1.5px dashed var(--line);border-radius:14px;height:56px;font-family:'Mali';font-size:20px;color:var(--ink)}
-.comment{border-bottom:1px dashed var(--line);padding:10px 0}
-.comment:last-child{border-bottom:none}
+.comment{
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 14px;
+  margin-bottom:10px;
+  box-shadow:0 2px 0 var(--shadow);
+}
 .checklabel{display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:12px}
 .strike{text-decoration:line-through;color:var(--ink-soft)}
 .err{color:#B5462E;font-size:13px;margin:-6px 0 10px}
@@ -127,6 +133,7 @@ button{font-family:'Mali';cursor:pointer}
     <button class="key" data-d="7">7</button><button class="key" data-d="8">8</button><button class="key" data-d="9">9</button>
     <span></span><button class="key" data-d="0">0</button><button class="key" id="pin-back">⌫</button>
   </div>
+  <p style="font-size:13px;color:var(--ink-soft);margin-top:16px">ลืม pin? แก้ไขได้ใน google sheet แท็บ Settings</p>
 </div>
 
 <div class="screen" id="s-home">
@@ -319,7 +326,7 @@ async function openIdea(id){
   list.innerHTML = '<div class="spin"></div>';
   const comments = await apiGet('listComments', {ideaId: id});
   list.innerHTML = (Array.isArray(comments) && comments.length)
-    ? comments.map(c => `<div class="comment">${escapeHtml(c.text)}</div>`).join('')
+    ? comments.map(c => `<div class="comment"><p style="margin:0">${escapeHtml(c.text)}</p><p style="margin:4px 0 0;font-size:12px;color:var(--ink-soft)">${formatDT(c.createdAt)}</p></div>`).join('')
     : '<div class="empty" style="padding:10px">ยังไม่มีคอมเมนต์</div>';
 }
 function renderIdeaHeader(idea){
