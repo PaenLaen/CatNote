@@ -120,7 +120,7 @@ button{font-family:'Mali';cursor:pointer}
 <body>
 <div id="app">
 
-<div class="screen active" id="s-pin" style="align-items:center;text-align:center;justify-content:center">
+<div class="screen" id="s-pin" style="align-items:center;text-align:center;justify-content:center">
   <img class="mascot" src="assets/cat_bell.png" alt="" style="width:130px;margin-bottom:6px">
   <h2>ใส่ pin เข้าใช้งาน</h2>
   <div id="dots" style="display:flex;gap:12px;margin:10px 0 22px">
@@ -135,7 +135,7 @@ button{font-family:'Mali';cursor:pointer}
   </div>
 </div>
 
-<div class="screen" id="s-home">
+<div class="screen active" id="s-home">
   <div class="topbar"><h2>สมุดไอเดีย</h2></div>
   <div id="ideas-list"></div>
 </div>
@@ -306,6 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
     '<input id="new-idea-input" placeholder="ไอเดียใหม่..." style="margin:0"> ' +
     '<button class="btn-primary" style="width:70px;height:44px" onclick="submitIdea()">เพิ่ม</button></div>'
   );
+  document.getElementById('nav').style.display = 'flex';
+  loadIdeas();
 });
 async function submitIdea(){
   const input = document.getElementById('new-idea-input');
