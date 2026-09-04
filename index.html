@@ -219,11 +219,20 @@ let notes = [];
 let currentIdeaId = null;
 let notesFilter = 'all';
 
+async function parseApiResponse(res, label){
+  const raw = await res.text();
+  try {
+    return JSON.parse(raw);
+  } catch(e) {
+    console.error(label + ' — ได้ response ที่ไม่ใช่ JSON (status ' + res.status + '):', raw.slice(0, 300));
+    throw new Error(label + ' ล้มเหลว: ' + res.status);
+  }
+}
 async function apiGet(action, params){
   params = params || {};
   const q = new URLSearchParams(Object.assign({action:action}, params)).toString();
   const res = await fetch(WEBAPP_URL + '?' + q);
-  return res.json();
+  return parseApiResponse(res, 'GET ' + action);
 }
 async function apiPost(body){
   const res = await fetch(WEBAPP_URL, {
@@ -231,7 +240,7 @@ async function apiPost(body){
     headers: {'Content-Type': 'text/plain;charset=utf-8'},
     body: JSON.stringify(body)
   });
-  return res.json();
+  return parseApiResponse(res, 'POST ' + (body && body.action));
 }
 
 function showScreen(id){
@@ -285,12 +294,21 @@ const statusCycle = ['คิดอยู่','กำลังทำ','เสร�
 async function loadIdeas(){
   const el = document.getElementById('ideas-list');
   el.innerHTML = '<div class="spin"></div>';
-  ideas = await apiGet('listIdeas');
-  if(!Array.isArray(ideas)) ideas = [];
-  if(ideas.length === 0){
-    el.innerHTML = '<div class="empty"><img class="mascot" src="assets/cat_idea.png" style="width:140px"><p>ยังไม่มีไอเดียเลย เริ่มจดอันแรกกันเถอะเมี๊ยว</p></div>';
-  } else {
-    el.innerHTML = ideas.slice().reverse().map(ideaCardHtml).join('');
+  try {
+    ideas = await apiGet('listIdeas');
+    if(!Array.isArray(ideas)) {
+      console.error('listIdeas ไม่ได้ return array:', ideas);
+      throw new Error('รูปแบบข้อมูลที่ได้ไม่ถูกต้อง');
+    }
+    if(ideas.length === 0){
+      el.innerHTML = '<div class="empty"><img class="mascot" src="assets/cat_idea.png" style="width:140px"><p>ยังไม่มีไอเดียเลย เริ่มจดอันแรกกันเถอะเมี๊ยว</p></div>';
+    } else {
+      el.innerHTML = ideas.slice().reverse().map(ideaCardHtml).join('');
+    }
+  } catch(err) {
+    console.error('loadIdeas error:', err);
+    ideas = [];
+    el.innerHTML = '<div class="empty" style="color:#B5462E">โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้งนะเมี๊ยว<br><span style="font-size:12px;color:var(--ink-soft)">(เปิด console ดูรายละเอียด error)</span><br><button class="btn-primary" style="width:auto;padding:0 20px;margin-top:10px" onclick="loadIdeas()">ลองใหม่</button></div>';
   }
 }
 function ideaCardHtml(idea){
@@ -325,16 +343,21 @@ async function openIdea(id){
   renderIdeaHeader(idea);
   const list = document.getElementById('comments-list');
   list.innerHTML = '<div class="spin"></div>';
-  const comments = await apiGet('listComments', {ideaId: id});
-  list.innerHTML = (Array.isArray(comments) && comments.length)
-    ? comments.map(c => `<div class="comment">
-        <div style="display:flex;justify-content:space-between;gap:8px">
-          <p style="margin:0">${escapeHtml(c.text)}</p>
-          <button onclick="removeComment('${c.id}')" style="background:none;border:none;color:var(--ink-soft);font-size:16px;flex-shrink:0">🗑</button>
-        </div>
-        <p style="margin:4px 0 0;font-size:12px;color:var(--ink-soft)">${formatDT(c.createdAt)}</p>
-      </div>`).join('')
-    : '<div class="empty" style="padding:10px">ยังไม่มีคอมเมนต์</div>';
+  try {
+    const comments = await apiGet('listComments', {ideaId: id});
+    list.innerHTML = (Array.isArray(comments) && comments.length)
+      ? comments.map(c => `<div class="comment">
+          <div style="display:flex;justify-content:space-between;gap:8px">
+            <p style="margin:0">${escapeHtml(c.text)}</p>
+            <button onclick="removeComment('${c.id}')" style="background:none;border:none;color:var(--ink-soft);font-size:16px;flex-shrink:0">🗑</button>
+          </div>
+          <p style="margin:4px 0 0;font-size:12px;color:var(--ink-soft)">${formatDT(c.createdAt)}</p>
+        </div>`).join('')
+      : '<div class="empty" style="padding:10px">ยังไม่มีคอมเมนต์</div>';
+  } catch(err) {
+    console.error('openIdea comments error:', err);
+    list.innerHTML = '<div class="empty" style="padding:10px;color:#B5462E">โหลดคอมเมนต์ไม่สำเร็จ</div>';
+  }
 }
 function renderIdeaHeader(idea){
   const st = statusMap[idea.status] || statusMap['คิดอยู่'];
@@ -377,9 +400,15 @@ function setNotesFilter(f){
 async function loadNotes(){
   const el = document.getElementById('notes-list');
   el.innerHTML = '<div class="spin"></div>';
-  notes = await apiGet('listNotes');
-  if(!Array.isArray(notes)) notes = [];
-  renderNotes();
+  try {
+    notes = await apiGet('listNotes');
+    if(!Array.isArray(notes)) notes = [];
+    renderNotes();
+  } catch(err) {
+    console.error('loadNotes error:', err);
+    notes = [];
+    el.innerHTML = '<div class="empty" style="color:#B5462E">โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้งนะเมี๊ยว<br><button class="btn-primary" style="width:auto;padding:0 20px;margin-top:10px" onclick="loadNotes()">ลองใหม่</button></div>';
+  }
 }
 function renderNotes(){
   const el = document.getElementById('notes-list');
