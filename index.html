@@ -133,7 +133,6 @@ button{font-family:'Mali';cursor:pointer}
     <button class="key" data-d="7">7</button><button class="key" data-d="8">8</button><button class="key" data-d="9">9</button>
     <span></span><button class="key" data-d="0">0</button><button class="key" id="pin-back">⌫</button>
   </div>
-  <p style="font-size:13px;color:var(--ink-soft);margin-top:16px">ลืม pin? แก้ไขได้ใน google sheet แท็บ Settings</p>
 </div>
 
 <div class="screen" id="s-home">
@@ -326,7 +325,13 @@ async function openIdea(id){
   list.innerHTML = '<div class="spin"></div>';
   const comments = await apiGet('listComments', {ideaId: id});
   list.innerHTML = (Array.isArray(comments) && comments.length)
-    ? comments.map(c => `<div class="comment"><p style="margin:0">${escapeHtml(c.text)}</p><p style="margin:4px 0 0;font-size:12px;color:var(--ink-soft)">${formatDT(c.createdAt)}</p></div>`).join('')
+    ? comments.map(c => `<div class="comment">
+        <div style="display:flex;justify-content:space-between;gap:8px">
+          <p style="margin:0">${escapeHtml(c.text)}</p>
+          <button onclick="removeComment('${c.id}')" style="background:none;border:none;color:var(--ink-soft);font-size:16px;flex-shrink:0">🗑</button>
+        </div>
+        <p style="margin:4px 0 0;font-size:12px;color:var(--ink-soft)">${formatDT(c.createdAt)}</p>
+      </div>`).join('')
     : '<div class="empty" style="padding:10px">ยังไม่มีคอมเมนต์</div>';
 }
 function renderIdeaHeader(idea){
@@ -355,6 +360,11 @@ async function submitComment(){
   await apiPost({action:'addComment', ideaId: currentIdeaId, text: text});
   openIdea(currentIdeaId);
 }
+async function removeComment(commentId){
+  if(!confirm('ลบคอมเมนต์นี้เมี๊ยว?')) return;
+  await apiPost({action:'deleteComment', commentId: commentId});
+  openIdea(currentIdeaId);
+}
 
 function setNotesFilter(f){
   notesFilter = f;
@@ -371,12 +381,16 @@ async function loadNotes(){
 }
 function renderNotes(){
   const el = document.getElementById('notes-list');
-  const filtered = notesFilter === 'history' ? notes.filter(n => n.done) : notes;
+  let filtered = notesFilter === 'history' ? notes.filter(n => n.done) : notes.slice();
+  filtered = filtered.slice().sort((a, b) => {
+    if(a.done !== b.done) return a.done ? 1 : -1;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
   if(filtered.length === 0){
     el.innerHTML = '<div class="empty"><img class="mascot" src="assets/cat_sleep.png" style="width:140px"><p>ยังไม่มีโน้ตเลย งีบไปพลางๆ ก่อนนะเมี๊ยว</p></div>';
     return;
   }
-  el.innerHTML = filtered.slice().reverse().map(noteCardHtml).join('');
+  el.innerHTML = filtered.map(noteCardHtml).join('');
 }
 function noteCardHtml(n){
   const doneStyle = n.done ? 'strike' : '';
