@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CatNote — สมุดบันทึกส่วนตัว</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FBF6EC;
+  --paper:#FFFDF8;
+  --ink:#4A3728;
+  --ink-soft:#8A7566;
+  --line:#E4D9C7;
+  --orange:#E8935B;
+  --orange-dark:#B5602E;
+  --blue:#6FA8DC;
+  --blue-dark:#2F5F86;
+  --blue-bg:#E4F0FA;
+  --amber:#F5C767;
+  --amber-dark:#8C6516;
+  --amber-bg:#FCEFCB;
+  --green:#8FBF7F;
+  --green-dark:#3E6B2E;
+  --green-bg:#E7F3E0;
+  --pink:#F3A6B8;
+  --shadow:rgba(74,55,40,0.14);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:'Sarabun',sans-serif;
+  color:var(--ink);
+  background:var(--cream);
+  background-image:repeating-linear-gradient(var(--cream) 0 31px, var(--line) 31px 32px);
+}
+h1,h2,h3,.hand{font-family:'Mali',cursive;font-weight:700}
+#app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:transparent}
+.screen{display:none;flex:1;flex-direction:column;padding:20px 18px 90px}
+.screen.active{display:flex}
+.card{
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px 16px;
+  margin-bottom:14px;
+  position:relative;
+  box-shadow:0 3px 0 var(--shadow);
+}
+.tape{position:absolute;top:-9px;height:18px;width:50px;border-radius:3px;opacity:0.9}
+.badge{font-family:'Mali';font-weight:700;font-size:13px;padding:3px 12px;border-radius:99px;display:inline-block;cursor:pointer;border:none}
+.badge.thinking{background:var(--amber-bg);color:var(--amber-dark)}
+.badge.doing{background:var(--blue-bg);color:var(--blue-dark)}
+.badge.done{background:var(--green-bg);color:var(--green-dark)}
+input,textarea,select{
+  width:100%;
+  font-family:'Sarabun';
+  font-size:15px;
+  padding:11px 12px;
+  border:1.5px dashed var(--line);
+  border-radius:10px;
+  background:var(--paper);
+  color:var(--ink);
+  margin-bottom:10px;
+}
+input:focus,textarea:focus{outline:none;border-color:var(--orange)}
+button{font-family:'Mali';cursor:pointer}
+.btn-primary{
+  background:var(--orange);color:#fff;border:none;border-radius:12px;
+  height:46px;width:100%;font-size:16px;font-weight:700;
+  box-shadow:0 3px 0 var(--orange-dark);
+}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--orange-dark)}
+.btn-ghost{background:none;border:none;color:var(--ink-soft);font-size:14px;display:flex;align-items:center;gap:4px;padding:6px 0}
+.fab{
+  position:fixed;bottom:78px;right:16px;
+  width:54px;height:54px;border-radius:50%;
+  background:var(--orange);color:#fff;border:none;font-size:26px;
+  box-shadow:0 4px 10px var(--shadow);z-index:5;
+}
+@media (min-width:430px){
+  .fab{right:calc(50vw - 199px)}
+}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.topbar h2{margin:0;font-size:22px}
+.mascot{display:block;margin:0 auto}
+.empty{text-align:center;padding:30px 10px;color:var(--ink-soft)}
+.tabs{display:flex;gap:8px;background:var(--paper);border:1px solid var(--line);padding:4px;border-radius:14px;margin-bottom:14px}
+.tabs button{flex:1;background:none;border:none;padding:8px;border-radius:10px;font-size:14px;color:var(--ink-soft)}
+.tabs button.active{background:var(--orange);color:#fff}
+#nav{
+  position:fixed;bottom:0;left:0;right:0;
+  max-width:430px;margin:0 auto;
+  background:var(--paper);border-top:1px solid var(--line);
+  display:none;padding:6px 0 10px;
+}
+.navbtn{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--ink-soft);width:33.33%}
+.navbtn.active{color:var(--orange-dark)}
+.icon{width:22px;height:22px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--line);transition:background .15s}
+.pin-dot.filled{background:var(--orange)}
+.key{background:var(--paper);border:1.5px dashed var(--line);border-radius:14px;height:56px;font-family:'Mali';font-size:20px;color:var(--ink)}
+.comment{border-bottom:1px dashed var(--line);padding:10px 0}
+.comment:last-child{border-bottom:none}
+.checklabel{display:flex;align-items:center;gap:8px;font-size:14px;margin-bottom:12px}
+.strike{text-decoration:line-through;color:var(--ink-soft)}
+.err{color:#B5462E;font-size:13px;margin:-6px 0 10px}
+.spin{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--orange);border-radius:50%;margin:24px auto;animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="screen active" id="s-pin" style="align-items:center;text-align:center;justify-content:center">
+  <img class="mascot" src="assets/cat_bell.png" alt="" style="width:130px;margin-bottom:6px">
+  <h2>ใส่ pin เข้าใช้งาน</h2>
+  <div id="dots" style="display:flex;gap:12px;margin:10px 0 22px">
+    <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+  </div>
+  <div id="pin-err" class="err" style="display:none">pin ไม่ถูกต้อง ลองใหม่นะเมี๊ยว</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%">
+    <button class="key" data-d="1">1</button><button class="key" data-d="2">2</button><button class="key" data-d="3">3</button>
+    <button class="key" data-d="4">4</button><button class="key" data-d="5">5</button><button class="key" data-d="6">6</button>
+    <button class="key" data-d="7">7</button><button class="key" data-d="8">8</button><button class="key" data-d="9">9</button>
+    <span></span><button class="key" data-d="0">0</button><button class="key" id="pin-back">⌫</button>
+  </div>
+  <p style="font-size:13px;color:var(--ink-soft);margin-top:16px">ลืม pin? แก้ไขได้ใน google sheet แท็บ Settings</p>
+</div>
+
+<div class="screen" id="s-home">
+  <div class="topbar"><h2>สมุดไอเดีย</h2></div>
+  <div id="ideas-list"></div>
+</div>
+
+<div class="screen" id="s-idea">
+  <button class="btn-ghost" onclick="showScreen('home')">← กลับ</button>
+  <div class="card" id="idea-header"></div>
+  <div id="comments-list"></div>
+  <input id="comment-input" placeholder="เพิ่มคอมเมนต์...">
+  <button class="btn-primary" onclick="submitComment()">ส่งคอมเมนต์</button>
+</div>
+
+<div class="screen" id="s-notes">
+  <div class="topbar"><h2>โน้ตเตือน</h2></div>
+  <div class="tabs">
+    <button id="tab-all" class="active" onclick="setNotesFilter('all')">ทั้งหมด</button>
+    <button id="tab-history" onclick="setNotesFilter('history')">ประวัติ</button>
+  </div>
+  <div id="notes-list"></div>
+  <button class="fab" onclick="showScreen('addnote')">+</button>
+</div>
+
+<div class="screen" id="s-addnote">
+  <button class="btn-ghost" onclick="showScreen('notes')">← กลับ</button>
+  <h2>โน้ตใหม่</h2>
+  <input id="note-text" placeholder="พิมพ์โน้ต...">
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <label class="checklabel" style="flex:1;border:1.5px dashed var(--line);border-radius:10px;padding:10px">
+      <input type="radio" name="ntype" value="note" checked onchange="toggleReminderFields()"> จดบันทึก
+    </label>
+    <label class="checklabel" style="flex:1;border:1.5px dashed var(--line);border-radius:10px;padding:10px">
+      <input type="radio" name="ntype" value="reminder" onchange="toggleReminderFields()"> แจ้งเตือน
+    </label>
+  </div>
+  <div id="reminder-fields" style="display:none">
+    <input id="note-datetime" type="datetime-local">
+    <label class="checklabel">
+      <input type="checkbox" id="note-calendar">
+      <img src="assets/cat_calendar.png" alt="" style="width:22px">
+      บันทึกลงปฏิทิน google (เตือนล่วงหน้า 15 นาที)
+    </label>
+  </div>
+  <div id="note-err" class="err" style="display:none"></div>
+  <button class="btn-primary" onclick="submitNote()">บันทึก</button>
+</div>
+
+<div class="screen" id="s-settings">
+  <h2>ตั้งค่า</h2>
+  <div class="card">
+    <h3 style="margin:0 0 10px;font-size:16px">เปลี่ยน pin</h3>
+    <input id="pin-old" placeholder="pin ปัจจุบัน" type="password" maxlength="4">
+    <input id="pin-new" placeholder="pin ใหม่ (4 หลัก)" type="password" maxlength="4">
+    <div id="settings-err" class="err" style="display:none"></div>
+    <div id="settings-ok" style="display:none;color:var(--green-dark);font-size:13px;margin:-6px 0 10px">เปลี่ยน pin แล้วเมี๊ยว</div>
+    <button class="btn-primary" onclick="changePinSubmit()">บันทึก pin ใหม่</button>
+  </div>
+  <div class="card" style="display:flex;align-items:center;gap:10px">
+    <img src="assets/cat_bell.png" alt="" style="width:38px">
+    <div><b>line เชื่อมต่อแล้ว</b><br><span style="font-size:13px;color:var(--ink-soft)">แจ้งเตือนทุก 7:00 น.</span></div>
+  </div>
+  <div class="card" style="display:flex;align-items:center;gap:10px">
+    <img src="assets/cat_calendar.png" alt="" style="width:38px">
+    <div><b>walk2dream@gmail.com</b><br><span style="font-size:13px;color:var(--ink-soft)">ปฏิทินที่ใช้บันทึก</span></div>
+  </div>
+</div>
+
+</div>
+
+<div id="nav" style="display:flex">
+  <button class="navbtn active" id="nav-home" onclick="showScreen('home')">🏠<span>ไอเดีย</span></button>
+  <button class="navbtn" id="nav-notes" onclick="showScreen('notes')">📝<span>โน้ต</span></button>
+  <button class="navbtn" id="nav-settings" onclick="showScreen('settings')">⚙️<span>ตั้งค่า</span></button>
+</div>
+
+<script>
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzkMRbY0Mqmne8BjUNy-9Bdm45yVAQSr3n-5Trbrq0dT1u4QcDavAoLvyLPypFvSLjo/exec';
+
+let pinBuffer = '';
+let ideas = [];
+let notes = [];
+let currentIdeaId = null;
+let notesFilter = 'all';
+
+async function apiGet(action, params){
+  params = params || {};
+  const q = new URLSearchParams(Object.assign({action:action}, params)).toString();
+  const res = await fetch(WEBAPP_URL + '?' + q);
+  return res.json();
+}
+async function apiPost(body){
+  const res = await fetch(WEBAPP_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  const bottomTabs = ['home','notes','settings'];
+  document.getElementById('nav').style.display = bottomTabs.includes(id) ? 'flex' : 'none';
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
+  if(id === 'home') document.getElementById('nav-home').classList.add('active');
+  if(id === 'notes') document.getElementById('nav-notes').classList.add('active');
+  if(id === 'settings') document.getElementById('nav-settings').classList.add('active');
+  if(id === 'home') loadIdeas();
+  if(id === 'notes') loadNotes();
+}
+
+document.querySelectorAll('.key[data-d]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(pinBuffer.length >= 4) return;
+    pinBuffer += btn.dataset.d;
+    updateDots();
+    if(pinBuffer.length === 4) checkPin();
+  });
+});
+document.getElementById('pin-back').addEventListener('click', () => {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updateDots();
+});
+function updateDots(){
+  const dots = document.querySelectorAll('#dots .pin-dot');
+  dots.forEach((d,i) => d.classList.toggle('filled', i < pinBuffer.length));
+}
+async function checkPin(){
+  document.getElementById('pin-err').style.display = 'none';
+  const r = await apiGet('verifyPin', {pin: pinBuffer});
+  if(r.ok){
+    showScreen('home');
+  } else {
+    document.getElementById('pin-err').style.display = 'block';
+  }
+  pinBuffer = '';
+  updateDots();
+}
+
+const statusMap = {
+  'คิดอยู่': {cls:'thinking', img:'cat_thinking.png'},
+  'กำลังทำ': {cls:'doing', img:'cat_idea.png'},
+  'เสร็จ': {cls:'done', img:'cat_done.png'}
+};
+const statusCycle = ['คิดอยู่','กำลังทำ','เสร็จ'];
+
+async function loadIdeas(){
+  const el = document.getElementById('ideas-list');
+  el.innerHTML = '<div class="spin"></div>';
+  ideas = await apiGet('listIdeas');
+  if(!Array.isArray(ideas)) ideas = [];
+  if(ideas.length === 0){
+    el.innerHTML = '<div class="empty"><img class="mascot" src="assets/cat_idea.png" style="width:140px"><p>ยังไม่มีไอเดียเลย เริ่มจดอันแรกกันเถอะเมี๊ยว</p></div>';
+  } else {
+    el.innerHTML = ideas.slice().reverse().map(ideaCardHtml).join('');
+  }
+}
+function ideaCardHtml(idea){
+  const st = statusMap[idea.status] || statusMap['คิดอยู่'];
+  return `<div class="card" style="cursor:pointer" onclick="openIdea('${idea.id}')">
+    <span class="badge ${st.cls}">${idea.status}</span>
+    <p class="hand" style="margin:8px 0 2px;font-size:16px">${escapeHtml(idea.title)}</p>
+  </div>`;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('ideas-list').insertAdjacentHTML('beforebegin',
+    '<div class="card" style="display:flex;gap:8px;align-items:center">' +
+    '<input id="new-idea-input" placeholder="ไอเดียใหม่..." style="margin:0"> ' +
+    '<button class="btn-primary" style="width:70px;height:44px" onclick="submitIdea()">เพิ่ม</button></div>'
+  );
+});
+async function submitIdea(){
+  const input = document.getElementById('new-idea-input');
+  const title = input.value.trim();
+  if(!title) return;
+  input.value = '';
+  await apiPost({action:'addIdea', title: title});
+  loadIdeas();
+}
+
+async function openIdea(id){
+  currentIdeaId = id;
+  showScreen('idea');
+  const idea = ideas.find(i => i.id === id);
+  renderIdeaHeader(idea);
+  const list = document.getElementById('comments-list');
+  list.innerHTML = '<div class="spin"></div>';
+  const comments = await apiGet('listComments', {ideaId: id});
+  list.innerHTML = (Array.isArray(comments) && comments.length)
+    ? comments.map(c => `<div class="comment">${escapeHtml(c.text)}</div>`).join('')
+    : '<div class="empty" style="padding:10px">ยังไม่มีคอมเมนต์</div>';
+}
+function renderIdeaHeader(idea){
+  const st = statusMap[idea.status] || statusMap['คิดอยู่'];
+  document.getElementById('idea-header').innerHTML = `
+    <div style="display:flex;gap:10px;align-items:center">
+      <img src="assets/${st.img}" style="width:46px">
+      <div>
+        <button class="badge ${st.cls}" onclick="cycleStatus()">${idea.status}</button>
+        <p class="hand" style="margin:6px 0 0;font-size:18px">${escapeHtml(idea.title)}</p>
+      </div>
+    </div>`;
+}
+async function cycleStatus(){
+  const idea = ideas.find(i => i.id === currentIdeaId);
+  const next = statusCycle[(statusCycle.indexOf(idea.status) + 1) % 3];
+  idea.status = next;
+  renderIdeaHeader(idea);
+  await apiPost({action:'updateIdeaStatus', ideaId: currentIdeaId, status: next});
+}
+async function submitComment(){
+  const input = document.getElementById('comment-input');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  await apiPost({action:'addComment', ideaId: currentIdeaId, text: text});
+  openIdea(currentIdeaId);
+}
+
+function setNotesFilter(f){
+  notesFilter = f;
+  document.getElementById('tab-all').classList.toggle('active', f === 'all');
+  document.getElementById('tab-history').classList.toggle('active', f === 'history');
+  renderNotes();
+}
+async function loadNotes(){
+  const el = document.getElementById('notes-list');
+  el.innerHTML = '<div class="spin"></div>';
+  notes = await apiGet('listNotes');
+  if(!Array.isArray(notes)) notes = [];
+  renderNotes();
+}
+function renderNotes(){
+  const el = document.getElementById('notes-list');
+  const filtered = notesFilter === 'history' ? notes.filter(n => n.done) : notes;
+  if(filtered.length === 0){
+    el.innerHTML = '<div class="empty"><img class="mascot" src="assets/cat_sleep.png" style="width:140px"><p>ยังไม่มีโน้ตเลย งีบไปพลางๆ ก่อนนะเมี๊ยว</p></div>';
+    return;
+  }
+  el.innerHTML = filtered.slice().reverse().map(noteCardHtml).join('');
+}
+function noteCardHtml(n){
+  const doneStyle = n.done ? 'strike' : '';
+  const sub = n.type === 'reminder' && n.remindAt
+    ? '⏰ ' + formatDT(n.remindAt)
+    : 'จดบันทึก';
+  return `<div class="card" style="display:flex;align-items:center;gap:10px;${n.done ? 'opacity:.6' : ''}">
+    <button onclick="toggleDone('${n.id}')" style="background:none;border:none;font-size:20px;color:${n.done ? 'var(--green-dark)' : 'var(--ink-soft)'}">${n.done ? '☑' : '☐'}</button>
+    <div style="flex:1">
+      <p class="${doneStyle}" style="margin:0;font-weight:600">${escapeHtml(n.text)}</p>
+      <p style="margin:0;font-size:12px;color:var(--ink-soft)">${sub}</p>
+    </div>
+    ${(n.addCalendar === true || n.addCalendar === 'TRUE') ? '<img src="assets/cat_calendar.png" style="width:24px">' : ''}
+  </div>`;
+}
+async function toggleDone(id){
+  const n = notes.find(x => x.id === id);
+  n.done = !n.done;
+  renderNotes();
+  await apiPost({action:'toggleNoteDone', noteId: id});
+}
+
+function toggleReminderFields(){
+  const isReminder = document.querySelector('input[name=ntype]:checked').value === 'reminder';
+  document.getElementById('reminder-fields').style.display = isReminder ? 'block' : 'none';
+}
+async function submitNote(){
+  const text = document.getElementById('note-text').value.trim();
+  const type = document.querySelector('input[name=ntype]:checked').value;
+  const errEl = document.getElementById('note-err');
+  errEl.style.display = 'none';
+  if(!text){ errEl.textContent = 'พิมพ์โน้ตก่อนนะคะ'; errEl.style.display = 'block'; return; }
+  let remindAt = '';
+  if(type === 'reminder'){
+    const dt = document.getElementById('note-datetime').value;
+    if(!dt){ errEl.textContent = 'เลือกวันเวลาแจ้งเตือนก่อนนะคะ'; errEl.style.display = 'block'; return; }
+    remindAt = new Date(dt).toISOString();
+  }
+  const addCalendar = document.getElementById('note-calendar').checked;
+  await apiPost({action:'addNote', text: text, type: type, remindAt: remindAt, addCalendar: addCalendar});
+  document.getElementById('note-text').value = '';
+  document.getElementById('note-datetime').value = '';
+  document.getElementById('note-calendar').checked = false;
+  showScreen('notes');
+}
+
+async function changePinSubmit(){
+  const oldPin = document.getElementById('pin-old').value.trim();
+  const newPin = document.getElementById('pin-new').value.trim();
+  const errEl = document.getElementById('settings-err');
+  const okEl = document.getElementById('settings-ok');
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+  if(!/^\d{4}$/.test(newPin)){ errEl.textContent = 'pin ใหม่ต้องเป็นตัวเลข 4 หลัก'; errEl.style.display = 'block'; return; }
+  const r = await apiPost({action:'changePin', oldPin: oldPin, newPin: newPin});
+  if(r.error){ errEl.textContent = r.error; errEl.style.display = 'block'; }
+  else { okEl.style.display = 'block'; document.getElementById('pin-old').value=''; document.getElementById('pin-new').value=''; }
+}
+
+function formatDT(iso){
+  const d = new Date(iso);
+  return d.toLocaleString('th-TH', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+}
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
