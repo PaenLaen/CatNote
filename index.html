@@ -207,7 +207,6 @@ button{font-family:'Mali';cursor:pointer}
 <div id="nav" style="display:flex">
   <button class="navbtn active" id="nav-home" onclick="showScreen('home')">🏠<span>ไอเดีย</span></button>
   <button class="navbtn" id="nav-notes" onclick="showScreen('notes')">📝<span>โน้ต</span></button>
-  <button class="navbtn" id="nav-settings" onclick="showScreen('settings')">⚙️<span>ตั้งค่า</span></button>
 </div>
 
 <script>
@@ -247,12 +246,11 @@ async function apiPost(body){
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('s-' + id).classList.add('active');
-  const bottomTabs = ['home','notes','settings'];
+  const bottomTabs = ['home','notes'];
   document.getElementById('nav').style.display = bottomTabs.includes(id) ? 'flex' : 'none';
   document.querySelectorAll('.navbtn').forEach(b => b.classList.remove('active'));
   if(id === 'home') document.getElementById('nav-home').classList.add('active');
   if(id === 'notes') document.getElementById('nav-notes').classList.add('active');
-  if(id === 'settings') document.getElementById('nav-settings').classList.add('active');
   if(id === 'home') loadIdeas();
   if(id === 'notes') loadNotes();
 }
