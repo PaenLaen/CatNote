@@ -120,6 +120,14 @@ button{font-family:'Mali';cursor:pointer}
 <body>
 <div id="app">
 
+<div class="screen active" id="s-access" style="align-items:center;text-align:center;justify-content:center">
+  <img class="mascot" src="assets/cat_bell.png" alt="" style="width:130px;margin-bottom:6px">
+  <h2>ใส่รหัสเข้าใช้งาน</h2>
+  <input id="access-code" type="tel" inputmode="numeric" maxlength="6" placeholder="รหัส 6 หลัก" style="text-align:center;font-size:22px;letter-spacing:8px;font-family:'Mali';max-width:220px">
+  <div id="access-err" class="err" style="display:none">รหัสไม่ถูกต้อง ลองใหม่นะเมี๊ยว</div>
+  <button class="btn-primary" style="max-width:220px" onclick="checkAccessCode()">เปิดสมุดโน้ต</button>
+</div>
+
 <div class="screen" id="s-pin" style="align-items:center;text-align:center;justify-content:center">
   <img class="mascot" src="assets/cat_bell.png" alt="" style="width:130px;margin-bottom:6px">
   <h2>ใส่ pin เข้าใช้งาน</h2>
@@ -135,7 +143,7 @@ button{font-family:'Mali';cursor:pointer}
   </div>
 </div>
 
-<div class="screen active" id="s-home">
+<div class="screen" id="s-home">
   <div class="topbar"><h2>สมุดไอเดีย</h2></div>
   <div id="ideas-list"></div>
 </div>
@@ -204,7 +212,7 @@ button{font-family:'Mali';cursor:pointer}
 
 </div>
 
-<div id="nav" style="display:flex">
+<div id="nav" style="display:none">
   <button class="navbtn active" id="nav-home" onclick="showScreen('home')">🏠<span>ไอเดีย</span></button>
   <button class="navbtn" id="nav-notes" onclick="showScreen('notes')">📝<span>โน้ต</span></button>
 </div>
@@ -283,6 +291,38 @@ async function checkPin(){
   updateDots();
 }
 
+const accessCodeInput = document.getElementById('access-code');
+accessCodeInput.addEventListener('input', () => {
+  accessCodeInput.value = accessCodeInput.value.replace(/\D/g, '').slice(0, 6);
+});
+accessCodeInput.addEventListener('keyup', (e) => {
+  if(e.key === 'Enter') checkAccessCode();
+});
+async function checkAccessCode(){
+  const code = accessCodeInput.value.trim();
+  const errEl = document.getElementById('access-err');
+  errEl.style.display = 'none';
+  if(!/^\d{6}$/.test(code)){
+    errEl.textContent = 'กรอกรหัส 6 หลักก่อนนะคะ';
+    errEl.style.display = 'block';
+    return;
+  }
+  try {
+    const r = await apiGet('verifyAccessCode', {code: code});
+    if(r.ok){
+      accessCodeInput.value = '';
+      showScreen('home');
+    } else {
+      errEl.textContent = 'รหัสไม่ถูกต้อง ลองใหม่นะเมี๊ยว';
+      errEl.style.display = 'block';
+    }
+  } catch(err) {
+    console.error('checkAccessCode error:', err);
+    errEl.textContent = 'เชื่อมต่อไม่สำเร็จ ลองใหม่นะเมี๊ยว';
+    errEl.style.display = 'block';
+  }
+}
+
 const statusMap = {
   'คิดอยู่': {cls:'thinking', img:'cat_thinking.png'},
   'กำลังทำ': {cls:'doing', img:'cat_idea.png'},
@@ -323,8 +363,6 @@ document.addEventListener('DOMContentLoaded', () => {
     '<input id="new-idea-input" placeholder="ไอเดียใหม่..." style="margin:0"> ' +
     '<button class="btn-primary" style="width:70px;height:44px" onclick="submitIdea()">เพิ่ม</button></div>'
   );
-  document.getElementById('nav').style.display = 'flex';
-  loadIdeas();
 });
 async function submitIdea(){
   const input = document.getElementById('new-idea-input');
