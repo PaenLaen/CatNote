@@ -414,6 +414,10 @@ function renderNotes(){
   let filtered = notesFilter === 'history' ? notes.filter(n => n.done) : notes.slice();
   filtered = filtered.slice().sort((a, b) => {
     if(a.done !== b.done) return a.done ? 1 : -1;
+    const aIsReminder = a.type === 'reminder' ? 1 : 0;
+    const bIsReminder = b.type === 'reminder' ? 1 : 0;
+    if(aIsReminder !== bIsReminder) return aIsReminder - bIsReminder;
+    if(aIsReminder) return new Date(a.remindAt) - new Date(b.remindAt);
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
   if(filtered.length === 0){
